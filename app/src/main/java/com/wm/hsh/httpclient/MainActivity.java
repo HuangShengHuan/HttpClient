@@ -7,6 +7,7 @@ import android.view.View;
 import com.wemind.net.client.Http;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
@@ -36,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 //                    }
 //                });
 
-        new Http.RequestBuilder()
+        Disposable disposable = new Http.RequestBuilder()
                 .get(MyModel.class)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<MyModel>() {

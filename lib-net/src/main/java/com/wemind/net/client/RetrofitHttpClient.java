@@ -31,6 +31,7 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.MediaType;
@@ -38,6 +39,7 @@ import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import retrofit2.Call;
 import retrofit2.Converter;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -91,8 +93,9 @@ public class RetrofitHttpClient implements HttpClient {
             @Override
             @SuppressWarnings({"unchecked"})
             public void subscribe(ObservableEmitter<T> e) throws Exception {
-                Response<ResponseBody> response = retrofit.create(RetrofitService.class).get(builder.headers, parseUrl(builder))
-                        .execute();
+                final Call<ResponseBody> call = retrofit.create(RetrofitService.class).get(builder.headers, parseUrl(builder));
+                e.setDisposable(new RequestDispose(call));
+                Response<ResponseBody> response = call.execute();
 
                 ResponseBody body = response.body();
                 if (body != null) {
@@ -122,9 +125,11 @@ public class RetrofitHttpClient implements HttpClient {
             @Override
             @SuppressWarnings({"unchecked"})
             public void subscribe(ObservableEmitter<T> e) throws Exception {
-                Response<ResponseBody> response = retrofit.create(RetrofitService.class)
-                        .post(builder.headers, builder.path, builder.params)
-                        .execute();
+
+                Call<ResponseBody> call = retrofit.create(RetrofitService.class)
+                        .post(builder.headers, builder.path, builder.params);
+                e.setDisposable(new RequestDispose(call));
+                Response<ResponseBody> response = call.execute();
 
                 ResponseBody body = response.body();
                 if (body != null) {
@@ -167,9 +172,10 @@ public class RetrofitHttpClient implements HttpClient {
             @Override
             @SuppressWarnings({"unchecked"})
             public void subscribe(ObservableEmitter<T> e) throws Exception {
-                Response<ResponseBody> response = retrofit.create(RetrofitService.class)
-                        .upload(builder.headers, builder.path, description, body)
-                        .execute();
+                Call<ResponseBody> call = retrofit.create(RetrofitService.class)
+                        .upload(builder.headers, builder.path, description, body);
+                e.setDisposable(new RequestDispose(call));
+                Response<ResponseBody> response = call.execute();
 
                 ResponseBody body = response.body();
                 if (body != null) {
@@ -210,9 +216,10 @@ public class RetrofitHttpClient implements HttpClient {
             @Override
             @SuppressWarnings({"unchecked"})
             public void subscribe(ObservableEmitter<T> e) throws Exception {
-                Response<ResponseBody> response = retrofit.create(RetrofitService.class)
-                        .multiUpload(builder.headers, builder.path, multipartBody)
-                        .execute();
+                Call<ResponseBody> call = retrofit.create(RetrofitService.class)
+                        .multiUpload(builder.headers, builder.path, multipartBody);
+                e.setDisposable(new RequestDispose(call));
+                Response<ResponseBody> response = call.execute();
 
                 ResponseBody body = response.body();
                 if (body != null) {
