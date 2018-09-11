@@ -16,9 +16,14 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.wemind.net.BaseModel;
 import com.wemind.net.Config;
+import com.wemind.net.FileUtils;
+import com.wemind.net.ResponseBodyWrapper;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -32,6 +37,7 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.MediaType;
@@ -231,6 +237,55 @@ public class RetrofitHttpClient implements HttpClient {
                         e.onComplete();
                     }
                 }
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    @Override
+    public Observable<Integer> download(final Http.RequestBuilder builder) {
+        checkRequest();
+
+        if (TextUtils.isEmpty(builder.downloadUrl)) {
+            throw new RuntimeException("downloadUrl client can not be null!");
+        }
+
+        return Observable.create(new ObservableOnSubscribe<ResponseBodyWrapper>() {
+            @Override
+            @SuppressWarnings({"unchecked"})
+            public void subscribe(ObservableEmitter<ResponseBodyWrapper> e) throws Exception {
+                final Call<ResponseBody> call = retrofit.create(RetrofitService.class).download(builder.downloadUrl);
+                e.setDisposable(new RequestDispose(call));
+                Response<ResponseBody> response = call.execute();
+
+                ResponseBody body = response.body();
+                e.onNext(new ResponseBodyWrapper(body));
+                e.onComplete();
+            }
+        }).flatMap(new Function<ResponseBodyWrapper, ObservableSource<Integer>>() {
+            @Override
+            public ObservableSource<Integer> apply(final ResponseBodyWrapper responseBodyWrapper) throws Exception {
+                if (responseBodyWrapper.emptyBody()) {
+                    return Observable.just(-1);
+                }
+
+                return Observable.create(new ObservableOnSubscribe<Integer>() {
+                    @Override
+                    public void subscribe(final ObservableEmitter<Integer> e) throws Exception {
+                        FileUtils.writeFile(responseBodyWrapper.byteStream(),
+                                builder.downDestDir + "/" + builder.fileName,
+                                new Consumer<Long>() {
+                                    @Override
+                                    public void accept(Long aLong) {
+                                        if (aLong != -1) {
+                                            e.onNext((int) (responseBodyWrapper.totalBytesRead() * 100 / responseBodyWrapper.contentLength()));
+                                        } else {
+                                            e.onComplete();
+                                        }
+                                    }
+                                });
+                    }
+
+                });
             }
         }).subscribeOn(Schedulers.io());
     }

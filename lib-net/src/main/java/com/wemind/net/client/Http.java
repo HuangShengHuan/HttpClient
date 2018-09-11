@@ -70,6 +70,10 @@ public class Http {
         return client.multiUpload(builder);
     }
 
+    public synchronized Observable<Integer> download(RequestBuilder builder) {
+        return client.download(builder);
+    }
+
     public static class Builder{
         String baseUrl = Config.BASE_URL;
 
@@ -140,6 +144,11 @@ public class Http {
 
         Class<?> type;
 
+        String downloadUrl;
+        String fileName;
+
+        String downDestDir = Config.DOWNLOAD_DEST_DIR;
+
         public RequestBuilder baseUrl(@NonNull String baseUrl) {
             this.baseUrl = baseUrl;
             return this;
@@ -147,6 +156,11 @@ public class Http {
 
         public RequestBuilder path(@NonNull String path) {
             this.path = path;
+            return this;
+        }
+
+        public RequestBuilder destDir(@NonNull String downDestDir) {
+            this.downDestDir = downDestDir;
             return this;
         }
 
@@ -184,6 +198,12 @@ public class Http {
         public <T extends BaseModel> Observable<T> multiUpload(Class<T> clazz) {
             type = clazz;
             return Http.getInstance().multiUpload(this);
+        }
+
+        public Observable<Integer> download(String downloadUrl, String fileName) {
+            this.downloadUrl = downloadUrl;
+            this.fileName = fileName;
+            return Http.getInstance().download(this);
         }
     }
 

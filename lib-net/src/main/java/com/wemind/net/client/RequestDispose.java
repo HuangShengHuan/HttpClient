@@ -1,6 +1,9 @@
 package com.wemind.net.client;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
+
+import com.wemind.net.Config;
 
 import io.reactivex.disposables.Disposable;
 import okhttp3.ResponseBody;

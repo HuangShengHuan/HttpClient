@@ -3,6 +3,7 @@ package com.wm.hsh.httpclient;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.TextView;
 
 import com.wemind.net.client.Http;
 
@@ -12,6 +13,8 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
+
+    private Disposable disposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,15 +40,37 @@ public class MainActivity extends AppCompatActivity {
 //                    }
 //                });
 
-        Disposable disposable = new Http.RequestBuilder()
-                .get(MyModel.class)
+//        Disposable disposable = new Http.RequestBuilder()
+//                .get(MyModel.class)
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Consumer<MyModel>() {
+//                    @Override
+//                    public void accept(MyModel myModel) throws Exception {
+//                        System.out.println("success");
+//                    }
+//                });
+
+        System.out.println(getExternalCacheDir().getAbsolutePath());
+        disposable = new Http.RequestBuilder()
+                .destDir(getExternalCacheDir().getAbsolutePath())
+                .download("https://dl.google.com/dl/android/studio/install/3.1.2.0/android-studio-ide-173.4720617-windows.exe", "android.exe")
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<MyModel>() {
+                .subscribe(new Consumer<Integer>() {
                     @Override
-                    public void accept(MyModel myModel) throws Exception {
-                        System.out.println("success");
+                    public void accept(Integer integer) throws Exception {
+                        TextView progress = findViewById(R.id.progress);
+                        progress.setText("progress:" + integer);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        throwable.printStackTrace();
                     }
                 });
 
+    }
+
+    public void Dispose(View view) {
+        disposable.dispose();
     }
 }

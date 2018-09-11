@@ -32,4 +32,9 @@ public class OkHttpClient implements HttpClient {
     public <T extends BaseModel> Observable<T> multiUpload(Http.RequestBuilder builder) {
         return null;
     }
+
+    @Override
+    public Observable<Integer> download(Http.RequestBuilder builder) {
+        return null;
+    }
 }
