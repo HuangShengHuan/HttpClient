@@ -1,10 +1,8 @@
 package com.wemind.net.client;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.ArrayMap;
-import android.util.Log;
 import android.util.Pair;
 
 import com.google.gson.Gson;
@@ -17,17 +15,13 @@ import com.google.gson.stream.JsonToken;
 import com.wemind.net.BaseModel;
 import com.wemind.net.Config;
 import com.wemind.net.FileUtils;
+import com.wemind.net.RequestDispose;
 import com.wemind.net.ResponseBodyWrapper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -35,8 +29,7 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
@@ -45,13 +38,10 @@ import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okio.Okio;
 import retrofit2.Call;
-import retrofit2.Converter;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.Multipart;
 
 /**
  * Created by HSH on 18-9-10.
@@ -246,7 +236,7 @@ public class RetrofitHttpClient implements HttpClient {
         checkRequest();
 
         if (TextUtils.isEmpty(builder.downloadUrl)) {
-            throw new RuntimeException("downloadUrl client can not be null!");
+            throw new NullPointerException("downloadUrl client can not be null!");
         }
 
         return Observable.create(new ObservableOnSubscribe<ResponseBodyWrapper>() {
@@ -271,18 +261,21 @@ public class RetrofitHttpClient implements HttpClient {
                 return Observable.create(new ObservableOnSubscribe<Integer>() {
                     @Override
                     public void subscribe(final ObservableEmitter<Integer> e) throws Exception {
+
+                        responseBodyWrapper.listen(new BiConsumer<Integer, Boolean>() {
+                            @Override
+                            public void accept(Integer current, Boolean finish) {
+                                if (finish) {
+                                    e.onNext(current);
+                                    e.onComplete();
+                                } else {
+                                    e.onNext(current);
+                                }
+                            }
+                        });
+
                         FileUtils.writeFile(responseBodyWrapper.byteStream(),
-                                builder.downDestDir + "/" + builder.fileName,
-                                new Consumer<Long>() {
-                                    @Override
-                                    public void accept(Long aLong) {
-                                        if (aLong != -1) {
-                                            e.onNext((int) (responseBodyWrapper.totalBytesRead() * 100 / responseBodyWrapper.contentLength()));
-                                        } else {
-                                            e.onComplete();
-                                        }
-                                    }
-                                });
+                                builder.downDestDir + "/" + builder.fileName);
                     }
 
                 });
@@ -292,11 +285,11 @@ public class RetrofitHttpClient implements HttpClient {
 
     private void checkRequest() {
         if (retrofit == null) {
-            throw new RuntimeException("retrofit client can not be null!");
+            throw new NullPointerException("retrofit client can not be null!");
         }
 
         if (initBuilder == null || TextUtils.isEmpty(initBuilder.baseUrl)) {
-            throw new RuntimeException("Base Url can not be null!");
+            throw new NullPointerException("Base Url can not be null!");
         }
     }
 

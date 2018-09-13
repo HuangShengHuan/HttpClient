@@ -1,4 +1,4 @@
-package com.wemind.net.client;
+package com.wemind.net;
 
 import android.support.annotation.NonNull;
 import android.util.Log;

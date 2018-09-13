@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         System.out.println(getExternalCacheDir().getAbsolutePath());
         disposable = new Http.RequestBuilder()
                 .destDir(getExternalCacheDir().getAbsolutePath())
-                .download("https://dl.google.com/dl/android/studio/install/3.1.2.0/android-studio-ide-173.4720617-windows.exe", "android.exe")
+                .download("http://mirrors.hust.edu.cn/apache/tomcat/tomcat-7/v7.0.90/bin/apache-tomcat-7.0.90.tar.gz", "apache-tomcat-7.0.90.tar.gz")
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<Integer>() {
                     @Override
